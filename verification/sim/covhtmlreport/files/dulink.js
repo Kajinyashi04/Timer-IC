@@ -1,0 +1,2 @@
+var g_data = {"3":["work.apb_slave_interface",95.00,1],"1":["work.test_bench",44.57,1],"5":["work.timer_core",85.30,1],"4":["work.timer_reg_file",98.06,1],"2":["work.timer_top",98.35,1]};
+processDuLinks(g_data);

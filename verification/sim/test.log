@@ -1,0 +1,104 @@
+# vsim -coverage -l test.log -c test_bench -voptargs="+cover=bcesft" -assertdebug -do "coverage save -onexit test.ucdb; log -r /*;run -all" 
+# Start time: 15:31:08 on Aug 28,2026
+# ** Note: (vsim-3812) Design is being optimized...
+# //  Questa Intel Starter FPGA Edition-64
+# //  Version 2024.3 linux_x86_64 Sep 10 2024
+# //
+# // Unpublished work. Copyright 2024 Siemens
+# //
+# // This material contains trade secrets or otherwise confidential information
+# // owned by Siemens Industry Software Inc. or its affiliates (collectively,
+# // "SISW"), or its licensors. Access to and use of this information is strictly
+# // limited as set forth in the Customer's applicable agreements with SISW.
+# //
+# // This material may not be copied, distributed, or otherwise disclosed outside
+# // of the Customer's facilities without the express written permission of SISW,
+# // and may not be used in any way not expressly authorized by SISW.
+# //
+# Loading work.test_bench(fast)
+# coverage save -onexit test.ucdb
+#  log -r /*
+# run -all
+# 
+# >>> RUNNING: reg_init_chk
+# [PASS] reg_init:TCR default | Addr: 0x000 | Read: 0x00000100
+# [PASS] reg_init:TDR0 default | Addr: 0x004 | Read: 0x00000000
+# [PASS] reg_init:TDR1 default | Addr: 0x008 | Read: 0x00000000
+# [PASS] reg_init:TCMP0 default | Addr: 0x00c | Read: 0xffffffff
+# [PASS] reg_init:TCMP1 default | Addr: 0x010 | Read: 0xffffffff
+# [PASS] reg_init:TIER default | Addr: 0x014 | Read: 0x00000000
+# [PASS] reg_init:TISR default | Addr: 0x018 | Read: 0x00000000
+# [PASS] reg_init:THCSR default | Addr: 0x01c | Read: 0x00000000
+# 
+# >>> RUNNING: reg_rw_chk
+# [PASS] reg_rw: TCMP0 write 0x5555_5555 | Addr: 0x00c | Read: 0x55555555
+# [PASS] reg_rw: TCMP0 write 0xAAAA_AAAA | Addr: 0x00c | Read: 0xaaaaaaaa
+# [PASS] reg_rw: TIER write 1 | Addr: 0x014 | Read: 0x00000001
+# [PASS] reg_rw: TIER write 0 | Addr: 0x014 | Read: 0x00000001
+# [PASS] _rw: TISR write 1 ignored when 0 | Addr: 0x018 | Read: 0x00000000
+# 
+# >>>> RUNNING: reg_reserved_chk
+# [PASS] reg_reserved: Addr 0x020 RAZ/WI | Addr: 0x020 | Read: 0x00000000
+# [PASS] reg_reserved: Addr 0x100 RAZ/WI | Addr: 0x100 | Read: 0x00000000
+# 
+# >>> RUNNING: reg_1hot_chk
+# [PASS] reg_1hot: Isolation TCMP0 | Addr: 0x00c | Read: 0x11111111
+# [PASS] reg_1hot: Isolation TCMP1 | Addr: 0x010 | Read: 0x22222222
+# [PASS] reg_1hot: Isolation TDR0 | Addr: 0x004 | Read: 0x33333333
+# [PASS] reg_1hot: Isolation TDR1 | Addr: 0x008 | Read: 0x44444444
+# 
+# >>> RUNNING: reg_byte_access
+# [PASS] byte_access: Byte write to TCMP0 | Addr: 0x00c | Read: 0xddccbbaa
+# [PASS] ess: Byte 1 write to TCR.div_val | Addr: 0x000 | Read: 0x00000400
+# 
+# >>> RUNNING: cnt_ctrl_chk
+# [PASS] l: Auto_clear on TDR0 on diasble | Addr: 0x004 | Read: 0x00000000
+# [PASS] l: Auto_clear on TDR1 on diasble | Addr: 0x008 | Read: 0x00000000
+# 
+# >>> RUNNING: apb_protocol_chk
+# [PASS]  Wait-state write and read check | Addr: 0x00c | Read: 0xcafebabe
+# 
+# >>> RUNNING: apb_multiple_chk
+# [PASS] aob_multiple: read TCMP0 | Addr: 0x00c | Read: 0x11111111
+# [PASS] apb_multiple: read TCMP1 | Addr: 0x010 | Read: 0x22222222
+# 
+# >>> RUNNING: apb_unligned_chk
+# [PASS] apb_unaliged: offset 0x001 RAZ | Addr: 0x001 | Read: 0x00000000
+# [PASS] apb_unaliged: offset 0x002 RAZ | Addr: 0x002 | Read: 0x00000000
+# 
+# >>> RUNIING: cnt_counting_chk
+# [PASS] cnt_counting: 64 bit rollover into TDR1 | TDR1: 0x00000001
+# 
+# >>> RUNNING: interrupt_chk
+# [PASS] nterrupt_chk: interrupt asserted | Interrupt level: 1
+# [PASS] interrupt_chk: TISR.int_st is 1 | Addr: 0x018 | Read: 0x00000001
+# [PASS] t_chk: Masked by TIER.int_en = 0 | Interrupt level: 0
+# [PASS] interrupt: TIST.ist_st cleared | Addr: 0x018 | Read: 0x00000000
+# 
+# >>> RUNNING: cnt_halt_chk
+# [PASS] cnt_halt: halt_ack is 1 | Addr: 0x01c | Read: 0x00000003
+# [PASS] cnt_halt: Frozen counter at 0x0000000e
+# [PASS] cntt_halt: halt_ack cleared to 0 | Addr: 0x01c | Read: 0x00000000
+# 
+# >>> RUNNING: apb_pslverr_chk
+# [PASS] rr: PROHIBITED div_val = 9 error | Expected Error: 1 | Got: 1
+# [PASS] apb_pslverr: TCR unchanged | Addr: 0x000 | Read: 0x00000100
+# [PASS] ange div_val while running error | Expected Error: 1 | Got: 1
+# [PASS] hange div_en while running error | Expected Error: 1 | Got: 1
+# 
+# >>> RUNNING: Coverage sweep
+# [PASS] oost: toggle pattern 0xAAAA_AAAA | Addr: 0x004 | Read: 0xaaaaaaaa
+# [PASS] oost: toggle pattern 0x5555_5555 | Addr: 0x004 | Read: 0x55555555
+# [PASS] cov_boost: byte strobes on TCMP1 | Addr: 0x010 | Read: 0x11223344
+# ------------------------------------------------
+#  	FINAL REPORT ALL TESTCASE V-PLAN                
+#  TOTAL TESTS: 43
+#  PASSES: 43
+#  FAILED: 0
+# ------------------------------------------------
+#  RESULT: PASSSSSSS ALL SIIUUUUUUUUUUU
+# ** Note: $finish    : ../tb/test_bench.v(710)
+#    Time: 13885 ns  Iteration: 0  Instance: /test_bench
+# Saving coverage database on exit...
+# End time: 15:31:09 on Aug 28,2026, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 0

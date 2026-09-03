@@ -1,0 +1,148 @@
+m255
+K4
+z2
+!s12c _opt
+Z0 !s99 nomlopt
+!s11f vlog 2024.3 2024.09, Sep 10 2024
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+Z1 d/ictc/student_data/minhhung_2211/Final_project/sim
+T_opt
+!s110 1787905868
+VnT6CIYHCY=>fY_<gAeJAA2
+04 10 4 work test_bench fast 0
+=1-bc2411209e67-6a91474c-a3241-14b47
+Z2 !s102 +cover=bcesft
+R0
+!s12f OEM100
+!s12b OEM100
+!s124 OEM10U5 
+!s135 nogc
+o-quiet -auto_acc_if_foreign -work work +cover=bcesft
+Z3 tCvgOpt 0
+n@_opt
+OL;O;2024.3;79
+vapb_slave_interface
+Z4 2../rtl/apb_slave_interface.v|../rtl/timer_reg_file.v|../rtl/timer_core.v|../rtl/timer_top.v|../tb/test_bench.v
+Z5 !s110 1787905866
+!i10b 1
+!s100 M[cgdSUP90XL`z`=HFojo2
+IZeAe>>dA`3mma6;2PMf`>3
+R1
+w1787843888
+8../rtl/apb_slave_interface.v
+F../rtl/apb_slave_interface.v
+!i122 0
+L0 1 36
+Z6 VDg1SIo80bB@j0V0VzS_@n1
+Z7 OL;L;2024.3;79
+r1
+!s85 0
+31
+Z8 !s108 1787905866.000000
+Z9 !s107 ../tb/test_bench.v|../rtl/timer_top.v|../rtl/timer_core.v|../rtl/timer_reg_file.v|../rtl/apb_slave_interface.v|
+Z10 !s90 +cover=bcesft|-f|compile.f|
+!i113 0
+R2
+Z11 o+cover=bcesft -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact
+R3
+vtest_bench
+R4
+R5
+!i10b 1
+!s100 kFPD:@1aD5YJ>lkD?cb;b0
+I1hSBCWa6ShKAN@c]je6E01
+R1
+w1787905854
+8../tb/test_bench.v
+F../tb/test_bench.v
+!i122 0
+L0 2 711
+R6
+R7
+r1
+!s85 0
+31
+R8
+R9
+R10
+!i113 0
+R2
+R11
+R3
+vtimer_core
+R4
+R5
+!i10b 1
+!s100 nLo5bTN9nRT8EhPiH`d4c1
+IDFF515GPicc:`ID=AFB]W0
+R1
+w1787843866
+8../rtl/timer_core.v
+F../rtl/timer_core.v
+!i122 0
+L0 1 142
+R6
+R7
+r1
+!s85 0
+31
+R8
+R9
+R10
+!i113 0
+R2
+R11
+R3
+vtimer_reg_file
+R4
+R5
+!i10b 1
+!s100 ZYJ:KaL[;FDk7Ik1jL_?g1
+IME<;Lkc@eJA2MNLCXezO<1
+R1
+w1787843156
+8../rtl/timer_reg_file.v
+F../rtl/timer_reg_file.v
+!i122 0
+L0 1 146
+R6
+R7
+r1
+!s85 0
+31
+R8
+R9
+R10
+!i113 0
+R2
+R11
+R3
+vtimer_top
+R4
+R5
+!i10b 1
+!s100 @hJm2IFU>B8KbKzcK0iaQ0
+Iizc8o;fha2Zc4`NMQF[092
+R1
+w1787843415
+8../rtl/timer_top.v
+F../rtl/timer_top.v
+!i122 0
+L0 1 110
+R6
+R7
+r1
+!s85 0
+31
+R8
+R9
+R10
+!i113 0
+R2
+R11
+R3
