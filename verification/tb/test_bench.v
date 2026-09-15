@@ -540,6 +540,64 @@ task test_apb_pslverr_chk;
 	end
 endtask
 
+// apb_wen_ren_terms_chk: apb_write/apb_read always raise tim_psel and
+// tim_penable together and drop them together, so the "wen <= tim_psel
+// & tim_pwrite & tim_penable & ~wen" (and the analogous ren) expression
+// in apb_slave_interface.v never sees tim_psel toggle while tim_penable
+// is already 1 -- FEC can't prove tim_psel independently controls the
+// result. Drive the raw APB signals directly (bypassing those tasks) to
+// hold tim_penable/tim_pwrite fixed and toggle only tim_psel.
+task test_apb_wen_ren_terms_chk;
+	begin
+		$display("\n>>> RUNNING: apb_wen_ren_terms_chk (FEC: psel term of wen/ren)");
+		reset_dut();
+
+		// --- wen: fix pwrite=1, penable=1; toggle only psel ---
+		@(posedge sys_clk);
+		tim_pwrite  <= 1'b1;
+		tim_paddr   <= ADDR_TCMP0;
+		tim_pwdata  <= 32'hFACE_CAFE;
+		tim_pstrb   <= 4'hF;
+		tim_penable <= 1'b1;
+		tim_psel    <= 1'b0;
+		@(posedge sys_clk);
+		#1;
+		check_cond(u_dut.u_apb_slave.wen === 1'b0, "apb_wen_ren_terms: wen stays 0 when psel=0 (penable/pwrite already 1)");
+
+		tim_psel <= 1'b1;
+		@(posedge sys_clk);
+		#1;
+		check_cond(u_dut.u_apb_slave.wen === 1'b1, "apb_wen_ren_terms: wen goes to 1 when psel rises (penable/pwrite unchanged)");
+
+		@(posedge sys_clk);
+		#1;
+		tim_psel    <= 1'b0;
+		tim_penable <= 1'b0;
+		tim_pwrite  <= 1'b0;
+		tim_pstrb   <= 4'b0;
+		check_reg(ADDR_TCMP0, 32'hFACE_CAFE, "apb_wen_ren_terms: manually-driven write landed");
+
+		// --- ren: same, but with pwrite=0 ---
+		@(posedge sys_clk);
+		tim_pwrite  <= 1'b0;
+		tim_paddr   <= ADDR_TCMP0;
+		tim_penable <= 1'b1;
+		tim_psel    <= 1'b0;
+		@(posedge sys_clk);
+		#1;
+		check_cond(u_dut.u_apb_slave.ren === 1'b0, "apb_wen_ren_terms: ren stays 0 when psel=0 (penable=1, pwrite=0)");
+
+		tim_psel <= 1'b1;
+		@(posedge sys_clk);
+		#1;
+		check_cond(u_dut.u_apb_slave.ren === 1'b1, "apb_wen_ren_terms: ren goes to 1 when psel rises (penable unchanged)");
+
+		@(posedge sys_clk);
+		tim_psel    <= 1'b0;
+		tim_penable <= 1'b0;
+	end
+endtask
+
 // self_check_neg_chk: deliberately trigger the FAIL/else branch of each
 // self-checking task (check_reg, check_pslverr, check_interrupt, check_cond)
 // so those branches reach coverage. Counters are snapshotted and restored
@@ -719,6 +777,7 @@ task run_all_tests;
 		test_interrupt_chk();
 		test_cnt_halt_chk();
 		test_apb_pslverr_chk();
+		test_apb_wen_ren_terms_chk();
 		test_self_check_neg_chk();
 		test_coverage_add_ons();
 	end
@@ -773,6 +832,7 @@ initial begin
 		"interrupt_chk"		: test_interrupt_chk;
 		"cnt_halt_chk"		: test_cnt_halt_chk;
 		"apb_pslverr_chk"	: test_apb_pslverr_chk;
+		"apb_wen_ren_terms_chk"	: test_apb_wen_ren_terms_chk;
 		"self_check_neg_chk"	: test_self_check_neg_chk;
 		"ALL"			: run_all_tests;
 		default: begin
