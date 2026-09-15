@@ -468,6 +468,22 @@ task test_interrupt_chk;
 		check_interrupt(1'b0, "interrupt_chk: Masked by TIER.int_en = 0");
 		apb_write(ADDR_TISR, 32'h0000_0001, 4'h1, rerr);
 		check_reg(ADDR_TISR, 32'h0000_0000, "interrupt: TIST.ist_st cleared");
+
+		// Negative case: the wait-loop above only ever exited via
+		// !tim_int becoming false. Give it a run where tim_int can
+		// never assert (TIER disabled, TCMP left at its unreachable
+		// reset max) so the timeout<200 exit path gets exercised too.
+		reset_dut();
+		apb_write(ADDR_TIER, 32'h0000_0000, 4'h1, rerr);
+		apb_write(ADDR_TCR,  32'h0000_0101, 4'h1, rerr);
+
+		timeout = 0;
+		while (!tim_int && timeout < 200) begin
+			@(posedge sys_clk);
+			timeout = timeout + 1;
+		end
+		check_cond(timeout >= 200, "interrupt_chk: wait-loop timeout path exercised (no interrupt expected)");
+		check_interrupt(1'b0, "interrupt_chk: tim_int stays low when TIER disabled and TCMP unreached");
 	end
 endtask
 
