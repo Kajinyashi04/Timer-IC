@@ -558,29 +558,42 @@ task test_coverage_add_ons;
 		apb_write(ADDR_TCR, 32'h0000_0003, 4'b0001, rerr);
 		#100;
 
+		// NOTE: div_val can't be changed while timer_en=1 (RTL blocks it,
+		// see apb_pslverr_chk), so stop the timer (keep div_en=1 to avoid
+		// tripping div_en_tim_en_err) before each new div_val below. This
+		// is what actually lets the sweep reach div_val=2,3,5,6,7,8 and
+		// exercise ctrl_mode_other (cnt==limit with a non-zero divider).
+		apb_write(ADDR_TCR, 32'h0000_0002, 4'b0001, rerr);
 		apb_write(ADDR_TCR, 32'h0000_0102, 4'b0011, rerr);
 		apb_write(ADDR_TCR, 32'h0000_0103, 4'b0001, rerr);
 		#100;
 
+		apb_write(ADDR_TCR, 32'h0000_0002, 4'b0001, rerr);
 		apb_write(ADDR_TCR, 32'h0000_0202, 4'b0011, rerr);
 		apb_write(ADDR_TCR, 32'h0000_0203, 4'b0001, rerr);
 		#100;
-		
+
+		apb_write(ADDR_TCR, 32'h0000_0002, 4'b0001, rerr);
 		apb_write(ADDR_TCR, 32'h0000_0302, 4'b0011, rerr);
 		apb_write(ADDR_TCR, 32'h0000_0303, 4'b0001, rerr);
 		#100;
+		apb_write(ADDR_TCR, 32'h0000_0002, 4'b0001, rerr);
 		apb_write(ADDR_TCR, 32'h0000_0402, 4'b0011, rerr);
 		apb_write(ADDR_TCR, 32'h0000_0403, 4'b0001, rerr);
 		#200;
+		apb_write(ADDR_TCR, 32'h0000_0002, 4'b0001, rerr);
 		apb_write(ADDR_TCR, 32'h0000_0502, 4'b0011, rerr);
 		apb_write(ADDR_TCR, 32'h0000_0503, 4'b0001, rerr);
 		#400;
+		apb_write(ADDR_TCR, 32'h0000_0002, 4'b0001, rerr);
 		apb_write(ADDR_TCR, 32'h0000_0602, 4'b0011, rerr);
 		apb_write(ADDR_TCR, 32'h0000_0603, 4'b0001, rerr);
 		#800;
+		apb_write(ADDR_TCR, 32'h0000_0002, 4'b0001, rerr);
 		apb_write(ADDR_TCR, 32'h0000_0702, 4'b0011, rerr);
 		apb_write(ADDR_TCR, 32'h0000_0703, 4'b0001, rerr);
 		#1500;
+		apb_write(ADDR_TCR, 32'h0000_0002, 4'b0001, rerr);
 		apb_write(ADDR_TCR, 32'h0000_0802, 4'b0011, rerr);
 		apb_write(ADDR_TCR, 32'h0000_0803, 4'b0001, rerr);
 		#3000;
