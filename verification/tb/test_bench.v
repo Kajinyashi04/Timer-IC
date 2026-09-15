@@ -324,6 +324,14 @@ task test_reg_rw_chk;
 		check_reg(ADDR_TIER,	32'h0000_0001, "reg_rw: TIER write 0");
 		apb_write(ADDR_TISR,	32'hFFFF_FFFF, 4'hF, rerr);
 		check_reg(ADDR_TISR,	32'h0000_0000, "reg_rw: TISR write 1 ignored when 0");
+
+		// Byte-strobe gating: pstrb[0]=0 must leave TIER/THCSR unwritten
+		// even though the address matches (proves the strobe term of
+		// "if(tim_pstrb[0])" independently, not just the address match).
+		apb_write(ADDR_TIER, 32'h0000_0000, 4'b1110, rerr);
+		check_reg(ADDR_TIER, 32'h0000_0001, "reg_rw: TIER unaffected when pstrb[0]=0");
+		apb_write(ADDR_THCSR, 32'h0000_0001, 4'b1110, rerr);
+		check_reg(ADDR_THCSR, 32'h0000_0000, "reg_rw: THCSR unaffected when pstrb[0]=0");
 	end
 endtask
 
@@ -464,6 +472,15 @@ task test_interrupt_chk;
 
 		check_interrupt(1'b1, "interrupt_chk: interrupt asserted");
 		check_reg(ADDR_TISR, 32'h0000_0001, "interrupt_chk: TISR.int_st is 1");
+
+		// Negative cases for int_clr_pulse's AND terms: neither a data
+		// bit0=0 write nor a strobe[0]=0 write should clear TISR, even
+		// though the address matches and int_st is currently set.
+		apb_write(ADDR_TISR, 32'h0000_0000, 4'hF, rerr);
+		check_reg(ADDR_TISR, 32'h0000_0001, "interrupt_chk: TISR write with data bit0=0 does not clear");
+		apb_write(ADDR_TISR, 32'h0000_0001, 4'b1110, rerr);
+		check_reg(ADDR_TISR, 32'h0000_0001, "interrupt_chk: TISR write with pstrb[0]=0 does not clear");
+
 		apb_write(ADDR_TIER, 32'h0000_0000, 4'h1, rerr);
 		check_interrupt(1'b0, "interrupt_chk: Masked by TIER.int_en = 0");
 		apb_write(ADDR_TISR, 32'h0000_0001, 4'h1, rerr);
@@ -573,6 +590,19 @@ task test_coverage_add_ons;
 		apb_write(ADDR_TCR, 32'h0000_0002, 4'b0011, rerr);
 		apb_write(ADDR_TCR, 32'h0000_0003, 4'b0001, rerr);
 		#100;
+
+		// MC/DC: with div_val still 0, exercise ctrl_mode_0's div_en
+		// term independently (div_val==0 & timer_en=1 & div_en=0 must
+		// give ctrl_mode_0=0), then restore div_en=1/timer_en=1 so the
+		// sweep below resumes from the same state as before.
+		apb_write(ADDR_TCR, 32'h0000_0002, 4'b0001, rerr); // timer_en=0 (div_en stays 1)
+		apb_write(ADDR_TCR, 32'h0000_0000, 4'b0011, rerr); // div_val stays 0, div_en=0
+		apb_write(ADDR_TCR, 32'h0000_0001, 4'b0001, rerr); // timer_en=1, div_en stays 0
+		#20;
+		apb_write(ADDR_TCR, 32'h0000_0000, 4'b0001, rerr); // timer_en=0 (div_en stays 0)
+		apb_write(ADDR_TCR, 32'h0000_0002, 4'b0011, rerr); // div_val stays 0, div_en=1
+		apb_write(ADDR_TCR, 32'h0000_0003, 4'b0001, rerr); // timer_en=1, div_en stays 1
+		#20;
 
 		// NOTE: div_val can't be changed while timer_en=1 (RTL blocks it,
 		// see apb_pslverr_chk), so stop the timer (keep div_en=1 to avoid
