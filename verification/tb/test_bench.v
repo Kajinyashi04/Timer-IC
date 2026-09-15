@@ -598,6 +598,54 @@ task test_apb_wen_ren_terms_chk;
 	end
 endtask
 
+// ctrl_mode_other_terms_chk: in timer_core.v, cnt_rst = (cnt==limit) |
+// !timer_en | !div_en, so cnt is forced back to 0 any time timer_en=0
+// or div_en=0. That means "timer_en=0 (or div_en=0) & div_val!=0 &
+// cnt==limit" -- needed to prove those two terms of ctrl_mode_other
+// independently -- can never happen through normal register writes:
+// cnt can't equal a non-zero limit while either enable is low. Force
+// u_dut.u_core.cnt directly to break that coupling for this test only.
+task test_ctrl_mode_other_terms_chk;
+	reg rerr;
+	begin
+		$display("\n>>> RUNNING: ctrl_mode_other_terms_chk (FEC: timer_en/div_en terms)");
+		reset_dut();
+		// div_val=2 -> limit=3, div_en=1, timer_en=1
+		apb_write(ADDR_TCR, 32'h0000_0202, 4'b0011, rerr);
+		apb_write(ADDR_TCR, 32'h0000_0203, 4'b0001, rerr);
+		@(posedge sys_clk);
+
+		force u_dut.u_core.cnt = u_dut.u_core.limit;
+
+		// timer_en term: cnt forced ==limit, div_en/div_val fixed
+		apb_write(ADDR_TCR, 32'h0000_0202, 4'b0001, rerr); // timer_en=0 (div_en stays 1)
+		@(posedge sys_clk);
+		#1;
+		check_cond(u_dut.u_core.ctrl_mode_other === 1'b0, "ctrl_mode_other_terms: false when timer_en=0 (cnt forced ==limit)");
+		apb_write(ADDR_TCR, 32'h0000_0203, 4'b0001, rerr); // timer_en=1 again
+		@(posedge sys_clk);
+		#1;
+		check_cond(u_dut.u_core.ctrl_mode_other === 1'b1, "ctrl_mode_other_terms: true when timer_en=1 (cnt forced ==limit)");
+
+		// div_en term: cnt forced ==limit, timer_en/div_val fixed
+		apb_write(ADDR_TCR, 32'h0000_0202, 4'b0001, rerr); // timer_en=0 (div_en stays 1)
+		apb_write(ADDR_TCR, 32'h0000_0200, 4'b0011, rerr); // div_val stays 2, div_en=0
+		apb_write(ADDR_TCR, 32'h0000_0201, 4'b0001, rerr); // timer_en=1, div_en stays 0
+		@(posedge sys_clk);
+		#1;
+		check_cond(u_dut.u_core.ctrl_mode_other === 1'b0, "ctrl_mode_other_terms: false when div_en=0 (cnt forced ==limit)");
+		apb_write(ADDR_TCR, 32'h0000_0200, 4'b0001, rerr); // timer_en=0 (div_en stays 0)
+		apb_write(ADDR_TCR, 32'h0000_0202, 4'b0011, rerr); // div_val stays 2, div_en=1
+		apb_write(ADDR_TCR, 32'h0000_0203, 4'b0001, rerr); // timer_en=1, div_en stays 1
+		@(posedge sys_clk);
+		#1;
+		check_cond(u_dut.u_core.ctrl_mode_other === 1'b1, "ctrl_mode_other_terms: true when div_en=1 (cnt forced ==limit)");
+
+		release u_dut.u_core.cnt;
+		apb_write(ADDR_TCR, 32'h0000_0200, 4'b0001, rerr); // timer_en=0, leave bus idle
+	end
+endtask
+
 // self_check_neg_chk: deliberately trigger the FAIL/else branch of each
 // self-checking task (check_reg, check_pslverr, check_interrupt, check_cond)
 // so those branches reach coverage. Counters are snapshotted and restored
@@ -778,6 +826,7 @@ task run_all_tests;
 		test_cnt_halt_chk();
 		test_apb_pslverr_chk();
 		test_apb_wen_ren_terms_chk();
+		test_ctrl_mode_other_terms_chk();
 		test_self_check_neg_chk();
 		test_coverage_add_ons();
 	end
@@ -833,6 +882,7 @@ initial begin
 		"cnt_halt_chk"		: test_cnt_halt_chk;
 		"apb_pslverr_chk"	: test_apb_pslverr_chk;
 		"apb_wen_ren_terms_chk"	: test_apb_wen_ren_terms_chk;
+		"ctrl_mode_other_terms_chk" : test_ctrl_mode_other_terms_chk;
 		"self_check_neg_chk"	: test_self_check_neg_chk;
 		"ALL"			: run_all_tests;
 		default: begin
