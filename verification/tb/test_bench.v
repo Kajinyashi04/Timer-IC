@@ -207,7 +207,25 @@ task check_interrupt(
 		end else begin
 			$display("[FAIL] %0s | Expected Interrupt: %0b | Got: %0b", test_name, expected_val, tim_int);
 			failed_tests = failed_tests + 1;
-		end 
+		end
+	end
+endtask
+
+// Generic boolean self-check, shared by tasks that used to inline their
+// own PASS/FAIL if/else (e.g. cnt_counting_chk, cnt_halt_chk)
+task check_cond(
+	input		cond,
+	input [255:0]	test_name
+);
+	begin
+		total_tests = total_tests + 1;
+		if (cond) begin
+			$display("[PASS] %0s", test_name);
+			passed_tests = passed_tests + 1;
+		end else begin
+			$display("[FAIL] %0s", test_name);
+			failed_tests = failed_tests + 1;
+		end
 	end
 endtask
 
@@ -412,15 +430,8 @@ task test_cnt_counting_chk;
 		apb_write(ADDR_TCR, 32'h0000_0101, 4'h1, rerr);
 		#300;
 		apb_read(ADDR_TDR1, rdata, rerr);
-		total_tests = total_tests + 1;
-		if(rdata >= 32'h0000_0001) begin	
-			$display("[PASS] cnt_counting: 64 bit rollover into TDR1 | TDR1: 0x%08X", rdata);
-			passed_tests = passed_tests + 1;
-		end else begin
-			$display("[FAIL] cnt_counting: Rollover failed | TDR1: 0x%08X", rdata);
-			failed_tests = failed_tests + 1;
-		end
-	end 
+		check_cond(rdata >= 32'h0000_0001, "cnt_counting: 64 bit rollover into TDR1");
+	end
 endtask
 
 // apb_unligned_chk
@@ -476,14 +487,7 @@ task test_cnt_halt_chk;
 		apb_read(ADDR_TDR0, h1, rerr);
 		#100;
 		apb_read(ADDR_TDR0, h2, rerr);
-		total_tests = total_tests + 1;
-		if (h1 === h2) begin
-			$display("[PASS] cnt_halt: Frozen counter at 0x%08X", h1);
-			passed_tests = passed_tests + 1;
-		end else begin
-			$display("[FAIL] cnt_halt: Frozen fail counter at 0x%08X", h1);
-			failed_tests = failed_tests + 1;
-		end
+		check_cond(h1 === h2, "cnt_halt: Frozen counter");
 		apb_write(ADDR_THCSR, 32'h0000_0000, 4'h1, rerr);
 		check_reg(ADDR_THCSR, 32'h0000_0000, "cntt_halt: halt_ack cleared to 0");
 	end
@@ -500,6 +504,43 @@ task test_apb_pslverr_chk;
 		apb_write(ADDR_TCR, 32'h0000_0101, 4'h1, rerr);
 		check_pslverr(ADDR_TCR, 32'h0000_0201, 4'b0010, 1'b1, "apb_pslverr: change div_val while running error");
 		check_pslverr(ADDR_TCR, 32'h0000_0103, 4'b0001, 1'b1, "apb_pslverr: change div_en while running error");
+	end
+endtask
+
+// self_check_neg_chk: deliberately trigger the FAIL/else branch of each
+// self-checking task (check_reg, check_pslverr, check_interrupt, check_cond)
+// so those branches reach coverage. Counters are snapshotted and restored
+// around each intentional mismatch so the final summary only reflects
+// real functional results.
+task test_self_check_neg_chk;
+	integer save_total, save_pass, save_fail;
+	begin
+		$display("\n>>> RUNNING: self_check_neg_chk (verifies checker FAIL branches)");
+		reset_dut();
+
+		save_total = total_tests; save_pass = passed_tests; save_fail = failed_tests;
+		check_reg(ADDR_TCR, 32'hDEAD_DEAD, "self_check_neg: intentional mismatch (check_reg)");
+		passed_tests = (failed_tests == save_fail + 1) ? save_pass + 1 : save_pass;
+		failed_tests = save_fail;
+		total_tests = save_total + 1;
+
+		save_total = total_tests; save_pass = passed_tests; save_fail = failed_tests;
+		check_pslverr(ADDR_TCMP0, 32'h0000_0000, 4'hF, 1'b1, "self_check_neg: intentional mismatch (check_pslverr)");
+		passed_tests = (failed_tests == save_fail + 1) ? save_pass + 1 : save_pass;
+		failed_tests = save_fail;
+		total_tests = save_total + 1;
+
+		save_total = total_tests; save_pass = passed_tests; save_fail = failed_tests;
+		check_interrupt(1'b1, "self_check_neg: intentional mismatch (check_interrupt)");
+		passed_tests = (failed_tests == save_fail + 1) ? save_pass + 1 : save_pass;
+		failed_tests = save_fail;
+		total_tests = save_total + 1;
+
+		save_total = total_tests; save_pass = passed_tests; save_fail = failed_tests;
+		check_cond(1'b0, "self_check_neg: intentional mismatch (check_cond)");
+		passed_tests = (failed_tests == save_fail + 1) ? save_pass + 1 : save_pass;
+		failed_tests = save_fail;
+		total_tests = save_total + 1;
 	end
 endtask
 
@@ -619,6 +660,7 @@ task run_all_tests;
 		test_interrupt_chk();
 		test_cnt_halt_chk();
 		test_apb_pslverr_chk();
+		test_self_check_neg_chk();
 		test_coverage_add_ons();
 	end
 endtask
@@ -672,6 +714,7 @@ initial begin
 		"interrupt_chk"		: test_interrupt_chk;
 		"cnt_halt_chk"		: test_cnt_halt_chk;
 		"apb_pslverr_chk"	: test_apb_pslverr_chk;
+		"self_check_neg_chk"	: test_self_check_neg_chk;
 		"ALL"			: run_all_tests;
 		default: begin
 			$display("[WARNING] Unknown test: %0s. RUNNING ALL TEST", test_name);
