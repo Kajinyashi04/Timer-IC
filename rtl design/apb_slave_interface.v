@@ -29,7 +29,12 @@ end
 assign bus_wr_en = wen & !error_detected;
 assign bus_rd_en = ren;
 assign tim_pready = wen | ren;
-assign tim_pslverr = error_detected && (wen | ren);
+// error_detected (timer_reg_file.v) is only ever asserted when
+// tim_pwrite=1, and wen/ren are computed from that same tim_pwrite at
+// the same edge, so they're mutually exclusive: whenever error_detected
+// can be 1, ren cannot be. The "| ren" branch was therefore dead logic
+// (pslverr can only ever be raised on a write), simplified away.
+assign tim_pslverr = error_detected && wen;
 
 
 
