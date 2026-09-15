@@ -34,7 +34,7 @@ module timer_top (
 	
 	wire [63:0]	count;
 	wire 		int_st;
-	wire		halt__ack;
+	wire		halt_ack;
 
 	wire 		tdr0_wr_en;
 	wire		tdr1_wr_en;
